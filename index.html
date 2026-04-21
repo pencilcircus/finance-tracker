@@ -362,7 +362,6 @@ pc.appendChild(h("div",{className:"rw"},h("span",{style:{fontSize:"13px"}},"Have
 pc.appendChild(h("div",{className:"rw"},h("span",{style:{fontSize:"13px"}},"Still to pay"),h("span",{style:{color:"var(--rd)",fontWeight:700,fontSize:"15px"}},"-"+fmt(mc.stillToPay))));
 pc.appendChild(h("div",{style:{height:"2px",background:mc.posNow>=0?"var(--gn)":"var(--rd)",margin:"6px 0",opacity:0.3}}));
 pc.appendChild(h("div",{className:"rw"},h("span",{style:{fontWeight:800,fontSize:"14px"}},"Left end of month"),h("span",{style:{fontWeight:800,fontSize:"22px",color:mc.posNow>=0?"var(--gn)":"var(--rd)"}},fmt(mc.posNow))));
-// Collect budget names and calc remaining from open budgets
 var budgetNames=[];var openBudgets=0;
 D.buckets.forEach(function(b){if(b.months!=="all"&&b.months.indexOf(curMK)<0)return;
 var ov2=(mm.bucketOverrides&&mm.bucketOverrides[b.id])||{};
@@ -375,20 +374,18 @@ var budgetRemaining=openBudgets;
 var afterLabel="";if(budgetNames.length<=3)afterLabel="after "+budgetNames.join(", ");
 else afterLabel="after "+budgetNames.slice(0,2).join(", ")+" and "+(budgetNames.length-2)+" more";
 if(budgetRemaining>0){var afterBudg=mc.posNow-budgetRemaining;
-pc.appendChild(h("div",{className:"rw",style:{fontSize:"10px",paddingLeft:"12px"}},h("span",{style:{color:"var(--tl)",fontStyle:"italic"}},afterLabel),h("span",{style:{color:afterBudg>=0?"var(--gn)":"var(--rd)"}},fmt(afterBudg))))}
-// Expected section
-if(mc.confInc>0){pc.appendChild(h("div",{style:{height:"12px"}}));
+pc.appendChild(h("div",{className:"rw",style:{fontSize:"10px",marginTop:"-2px",paddingLeft:"12px"}},h("span",{style:{color:"var(--tl)"}},afterLabel),h("span",{style:{color:afterBudg>=0?"var(--gn)":"var(--rd)"}},fmt(afterBudg))))}
+if(mc.confInc>0){pc.appendChild(h("div",{style:{height:"8px"}}));
 pc.appendChild(h("div",{className:"rw",style:{fontSize:"13px"}},h("span",{style:{fontWeight:700}},"With expected"),h("span",{style:{fontWeight:700,fontSize:"16px",color:mc.posExpected>=0?"var(--gn)":"var(--rd)"}},fmt(mc.posExpected))));
 if(budgetRemaining>0){var afterBudgExp=mc.posExpected-budgetRemaining;
-pc.appendChild(h("div",{className:"rw",style:{fontSize:"10px",paddingLeft:"12px"}},h("span",{style:{color:"var(--tl)",fontStyle:"italic"}},afterLabel),h("span",{style:{color:afterBudgExp>=0?"var(--gn)":"var(--rd)"}},fmt(afterBudgExp))))}}
-// Potentials section
-if(mc.potT>0){pc.appendChild(h("div",{style:{height:"8px"}}));
+pc.appendChild(h("div",{className:"rw",style:{fontSize:"10px",marginTop:"-2px",paddingLeft:"12px"}},h("span",{style:{color:"var(--tl)"}},afterLabel),h("span",{style:{color:afterBudgExp>=0?"var(--gn)":"var(--rd)"}},fmt(afterBudgExp))))}}
+if(mc.potT>0){pc.appendChild(h("div",{style:{height:"4px"}}));
 pc.appendChild(h("div",{className:"rw",style:{fontSize:"13px"}},h("span",{style:{fontWeight:700}},"With potentials"),h("span",{style:{fontWeight:700,fontSize:"16px",color:mc.posPot>=0?"var(--gn)":"var(--rd)"}},fmt(mc.posPot))));
 if(budgetRemaining>0){var afterBudgPot=mc.posPot-budgetRemaining;
-pc.appendChild(h("div",{className:"rw",style:{fontSize:"10px",paddingLeft:"12px"}},h("span",{style:{color:"var(--tl)",fontStyle:"italic"}},afterLabel),h("span",{style:{color:afterBudgPot>=0?"var(--gn)":"var(--rd)"}},fmt(afterBudgPot))))}}
-// Budget traffic lights
+pc.appendChild(h("div",{className:"rw",style:{fontSize:"10px",marginTop:"-2px",paddingLeft:"12px"}},h("span",{style:{color:"var(--tl)"}},afterLabel),h("span",{style:{color:afterBudgPot>=0?"var(--gn)":"var(--rd)"}},fmt(afterBudgPot))))}}
 if(budgetNames.length>0){
-pc.appendChild(h("div",{style:{height:"12px"}}));
+pc.appendChild(h("div",{style:{height:"1px",background:"var(--ln)",margin:"10px 0 4px"}}));
+pc.appendChild(h("div",{style:{fontSize:"9px",fontWeight:700,color:"var(--tl)",letterSpacing:"0.5px",marginBottom:"2px"}},"BUDGETS"));
 D.buckets.forEach(function(b){if(b.months!=="all"&&b.months.indexOf(curMK)<0)return;
 var ov2=(mm.bucketOverrides&&mm.bucketOverrides[b.id])||{};
 b.items.forEach(function(it){var io=ov2[it.id]||{};var isB=io.isBudget!==undefined?io.isBudget:it.isBudget;if(!isB)return;
@@ -398,8 +395,11 @@ var pct=amt>0?spent/amt:0;var dot=isDone?"✅":pct>=0.85?"🔴":pct>=0.5?"🟡":
 pc.appendChild(h("div",{className:"rw",style:{padding:"2px 0",opacity:isDone?0.6:1}},h("span",{style:{fontSize:"11px"}},dot+" "+it.name+(isDone?" done":"")),h("span",{style:{fontSize:"11px",fontWeight:600,color:isDone?"var(--tl)":pct>=0.85?"var(--rd)":pct>=0.5?"var(--au)":"var(--gn)"}},fmt(spent)+"/"+fmt(amt))))})});
 (mm.extras||[]).forEach(function(it){if(!it.isBudget)return;
 var isDone=it.budgetDone;
-var pct=it.amount>0?(it.spent||0)/it.amount:0;var dot=isDone?"✅":pct>=0.85?"🔴":pct>=0.5?"🟡":"🟢";
-pc.appendChild(h("div",{className:"rw",style:{padding:"2px 0",opacity:isDone?0.6:1}},h("span",{style:{fontSize:"11px"}},dot+" "+it.name+(isDone?" done":"")),h("span",{style:{fontSize:"11px",fontWeight:600,color:isDone?"var(--tl)":pct>=0.85?"var(--rd)":pct>=0.5?"var(--au)":"var(--gn)"}},fmt(it.spent||0)+"/"+fmt(it.amount))))})}
+var pct2=it.amount>0?(it.spent||0)/it.amount:0;var dot2=isDone?"✅":pct2>=0.85?"🔴":pct2>=0.5?"🟡":"🟢";
+var eRow=h("div",{className:"rw",style:{padding:"2px 0",opacity:isDone?0.6:1}},
+h("span",{style:{fontSize:"11px"}},dot2+" "+it.name+(isDone?" done":"")),
+h("span",{style:{fontSize:"11px",fontWeight:600,color:isDone?"var(--tl)":pct2>=0.85?"var(--rd)":pct2>=0.5?"var(--au)":"var(--gn)"}},fmt(it.spent||0)+"/"+fmt(it.amount)));
+pc.appendChild(eRow)});}
 f.appendChild(pc);
 
 // TO SAVINGS
