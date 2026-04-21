@@ -386,8 +386,9 @@ if(budgetRemaining>0){var afterBudg=mc.posNow-budgetRemaining;
 pc.appendChild(h("div",{className:"rw",style:{fontSize:"10px",padding:"0 0 0 12px",marginTop:"-4px"}},h("span",{style:{color:"var(--tl)"}},afterLabel),h("span",{style:{color:afterBudg>=0?"var(--gn)":"var(--rd)"}},fmt(afterBudg))))}
 // With salary
 if(mc.salExpected>0){pc.appendChild(h("div",{style:{height:"10px"}}));
-pc.appendChild(h("div",{className:"rw",style:{fontSize:"13px"}},h("span",{style:{fontWeight:700}},"With salary"),h("span",{style:{fontWeight:700,fontSize:"16px",color:mc.posSal>=0?"var(--gn)":"var(--rd)"}},fmt(mc.posSal))));
-pc.appendChild(h("div",{style:{fontSize:"9px",color:"var(--tl)",paddingLeft:"12px",marginTop:"-3px"}},mc.salExpNames.join(", ")+" ~"+fmt(mc.salExpected)));
+pc.appendChild(h("div",{className:"rw",style:{fontSize:"13px"}},
+h("div",null,h("span",{style:{fontWeight:700}},"With salary"),h("span",{style:{fontSize:"9px",color:"var(--tl)",marginLeft:"6px"}},mc.salExpNames.join(", ")+" ~"+fmt(mc.salExpected))),
+h("span",{style:{fontWeight:700,fontSize:"16px",color:mc.posSal>=0?"var(--gn)":"var(--rd)"}},fmt(mc.posSal))));
 if(budgetRemaining>0){var afterBudgSal=mc.posSal-budgetRemaining;
 pc.appendChild(h("div",{className:"rw",style:{fontSize:"10px",padding:"0 0 0 12px",marginTop:"-4px"}},h("span",{style:{color:"var(--tl)"}},afterLabel),h("span",{style:{color:afterBudgSal>=0?"var(--gn)":"var(--rd)"}},fmt(afterBudgSal))))}}
 // With expected income
@@ -653,6 +654,8 @@ c.appendChild(h("div",{className:"dv"}));c.appendChild(h("div",{style:{fontSize:
 c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"EUR received"),numI(md.eurReceived||0,80,function(v){ensureMD();j.monthData[mk].eurReceived=v;save();render()})));
 c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"Kept in "+j.currency),numI(md.localKept||0,80,function(v){ensureMD();j.monthData[mk].localKept=v;save();render()})));
 if(md.trustEmployer===false)c.appendChild(h("div",{style:{fontSize:"11px",color:"var(--rd)",marginTop:"4px"}},"⚠ Not counted"));
+if(!md.received&&md.trustEmployer!==false){c.appendChild(h("div",{className:"dv"}));
+c.appendChild(h("button",{className:"bn",style:{width:"100%"},onClick:function(){sM("jobReceive","Salary received",{jobRef:j,month:mk})}},"Mark as received →"))}
 return c}
 
 function rBkt(mk,b,mm){var bl=h("div",{style:{marginBottom:"12px"}});var ov=(mm.bucketOverrides&&mm.bucketOverrides[b.id])||{};var pT=0,uT=0;
