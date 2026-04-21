@@ -342,23 +342,19 @@ pc.appendChild(h("div",{style:{height:"2px",background:mc.posNow>=0?"var(--gn)":
 pc.appendChild(h("div",{className:"rw"},h("span",{style:{fontWeight:800,fontSize:"14px"}},"Left end of month"),h("span",{style:{fontWeight:800,fontSize:"22px",color:mc.posNow>=0?"var(--gn)":"var(--rd)"}},(mc.posNow>=0?"+":"")+fmt(mc.posNow))));
 if(mc.confInc>0)pc.appendChild(h("div",{className:"rw",style:{fontSize:"11px",marginTop:"4px"}},h("span",{style:{color:"var(--tl)"}},"If expected comes in"),h("span",{style:{color:"var(--au)"}},(mc.posExpected>=0?"+":"")+fmt(mc.posExpected))));
 if(mc.potT>0)pc.appendChild(h("div",{className:"rw",style:{fontSize:"11px"}},h("span",{style:{color:"var(--tl)"}},"If potentials too"),h("span",{style:{color:"var(--tl)"}},(mc.posPot>=0?"+":"")+fmt(mc.posPot))));
-f.appendChild(pc);
-
-// BUDGET SUMMARY CARD
+// Budget summary inside position card
 if(mc.budgetTotal>0){
-var bc=h("div",{className:"cd"});
-bc.appendChild(h("div",{className:"st"},h("span",null,"Budgets")));
-// Collect all budget items from buckets and extras
+pc.appendChild(h("div",{style:{height:"1px",background:"var(--ln)",margin:"8px 0"}}));
 D.buckets.forEach(function(b){if(b.months!=="all"&&b.months.indexOf(curMK)<0)return;
 var ov2=(mm.bucketOverrides&&mm.bucketOverrides[b.id])||{};
 b.items.forEach(function(it){var io=ov2[it.id]||{};var isB=io.isBudget!==undefined?io.isBudget:it.isBudget;if(!isB)return;
 var amt=io.amount!==undefined?io.amount:it.amount;var spent=io.spent!==undefined?io.spent:(it.spent||0);
 var pct=amt>0?spent/amt:0;var dot=pct>=0.85?"🔴":pct>=0.5?"🟡":"🟢";
-bc.appendChild(h("div",{className:"rw",style:{padding:"2px 0"}},h("span",{style:{fontSize:"12px"}},dot+" "+it.name),h("span",{style:{fontSize:"12px",fontWeight:600,color:pct>=0.85?"var(--rd)":pct>=0.5?"var(--au)":"var(--gn)"}},fmt(spent)+"/"+fmt(amt))))})});
+pc.appendChild(h("div",{className:"rw",style:{padding:"2px 0"}},h("span",{style:{fontSize:"11px"}},dot+" "+it.name),h("span",{style:{fontSize:"11px",fontWeight:600,color:pct>=0.85?"var(--rd)":pct>=0.5?"var(--au)":"var(--gn)"}},fmt(spent)+"/"+fmt(amt))))})});
 (mm.extras||[]).forEach(function(it){if(!it.isBudget)return;
 var pct=it.amount>0?(it.spent||0)/it.amount:0;var dot=pct>=0.85?"🔴":pct>=0.5?"🟡":"🟢";
-bc.appendChild(h("div",{className:"rw",style:{padding:"2px 0"}},h("span",{style:{fontSize:"12px"}},dot+" "+it.name),h("span",{style:{fontSize:"12px",fontWeight:600,color:pct>=0.85?"var(--rd)":pct>=0.5?"var(--au)":"var(--gn)"}},fmt(it.spent||0)+"/"+fmt(it.amount))))});
-f.appendChild(bc)}
+pc.appendChild(h("div",{className:"rw",style:{padding:"2px 0"}},h("span",{style:{fontSize:"11px"}},dot+" "+it.name),h("span",{style:{fontSize:"11px",fontWeight:600,color:pct>=0.85?"var(--rd)":pct>=0.5?"var(--au)":"var(--gn)"}},fmt(it.spent||0)+"/"+fmt(it.amount))))})}
+f.appendChild(pc);
 
 // TO SAVINGS
 var sv=h("div",{className:"cd"});sv.appendChild(h("div",{className:"st"},h("span",null,"→ To savings"),h("button",{className:"bsm",onClick:function(){sM("savTransfer","Add to savings",{month:curMK})}},"+ add")));
