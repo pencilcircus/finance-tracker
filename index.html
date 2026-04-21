@@ -384,7 +384,7 @@ var ic=h("div",{className:"cd"});ic.appendChild(h("div",{className:"st"},h("span
 var rv=it.status==="received";
 var row=h("div",{className:"rw"+(rv?" pd":""),style:{position:"relative",flexWrap:"wrap"}},
 h("div",null,h("span",{style:{fontSize:"13px",textDecoration:rv?"line-through":"none"}},it.name),it.recur?h("span",{style:{fontSize:"9px",color:"var(--tl)",marginLeft:"4px"}},"("+it.recur+"mo)"):null,
-rv&&it.addedToAccount?h("span",{style:{fontSize:"9px",color:"var(--gn)",marginLeft:"4px"}},"→ "+it.addedToAccount):null,
+rv&&it.addedToAccount?h("span",{style:{fontSize:"9px",color:it.addedToAccount==="accounted"?"var(--tl)":"var(--gn)",marginLeft:"4px"}},it.addedToAccount==="accounted"?"✓ accounted":"→ "+it.addedToAccount):null,
 rv&&!it.addedToAccount?h("span",{style:{fontSize:"9px",color:"var(--au)",marginLeft:"4px"}},"floating"):null),
 h("div",{style:{display:"flex",alignItems:"center",gap:"4px"}},
 h("span",{className:"vl"},"€"+it.amount),
@@ -398,6 +398,7 @@ var menu=h("div",{className:"rcv-menu",style:{width:"100%"}});
 (mm.accounts||[]).forEach(function(acc){menu.appendChild(h("button",{className:"rcv-opt",onClick:function(){it.status="received";it.addedToAccount=acc.name;acc.amount+=it.amount;showRcvMenu=null;save();render()}},"Add to "+acc.name))});
 D.savings.forEach(function(sa){menu.appendChild(h("button",{className:"rcv-opt",onClick:function(){it.status="received";it.addedToAccount=sa.name+" (savings)";sa.amount+=it.amount;D.savingsLog.push({id:nid(),date:new Date().toLocaleDateString(),desc:it.name+" → "+sa.name,amt:it.amount});showRcvMenu=null;save();render()}},"To savings: "+sa.name))});
 menu.appendChild(h("button",{className:"rcv-opt",style:{color:"var(--au)"},onClick:function(){it.status="received";it.addedToAccount=null;showRcvMenu=null;save();render()}},"Just mark received (floating)"));
+menu.appendChild(h("button",{className:"rcv-opt",style:{color:"var(--tl)"},onClick:function(){it.status="received";it.addedToAccount="accounted";showRcvMenu=null;save();render()}},"Already accounted for"));
 menu.appendChild(h("button",{className:"rcv-opt",style:{color:"var(--tl)"},onClick:function(){showRcvMenu=null;render()}},"Cancel"));
 row.appendChild(menu)}
 ic.appendChild(row)});
