@@ -503,14 +503,15 @@ f.appendChild(oc);return f}
 function rJob(mk,j){var md=(j.monthData&&j.monthData[mk])||{};var days=md.days||{};var paidOff=md.paidOff||{};var unpaidOff=md.unpaidOff||{};
 function ensureMD(){if(!j.monthData)j.monthData={};if(!j.monthData[mk])j.monthData[mk]={days:{},paidOff:{},unpaidOff:{},eurReceived:0,localKept:0,received:false};if(!j.monthData[mk].days)j.monthData[mk].days={};if(!j.monthData[mk].paidOff)j.monthData[mk].paidOff={};if(!j.monthData[mk].unpaidOff)j.monthData[mk].unpaidOff={}}
 var cs=cS[j.currency]||"";
+var cd=j.cycleDays||30;
 // Calculate gross per person
 var gross=0;j.people.forEach(function(p){var worked=days[p]||0;var pOff=paidOff[p]||0;var paidDays=worked+pOff;
 if(j.rateType==="daily")gross+=paidDays*j.rate;
 else if(j.rateType==="weekly")gross+=Math.ceil(paidDays/7)*j.rate;
-else if(j.rateType==="monthly")gross+=j.rate;
+else if(j.rateType==="monthly"){if(j.fullPay)gross+=j.rate;else gross+=cd>0?j.rate*(paidDays/cd):j.rate}
 else if(j.rateType==="lump")gross+=j.rate});
 // Alternate rate calc
-var altRate=0;var cd=j.cycleDays||30;
+var altRate=0;
 if(j.rateType==="daily"){altRate=j.rate*cd}
 else if(j.rateType==="weekly"){altRate=j.rate*cd/7}
 else if(j.rateType==="monthly"){altRate=cd>0?j.rate/cd:0}
@@ -539,6 +540,10 @@ else if(j.rateType==="monthly"){c.appendChild(h("div",{className:"rw",style:{fon
 else if(j.rateType==="lump"){c.appendChild(h("div",{className:"rw",style:{fontSize:"11px"}},h("span",{className:"dm"},"~daily (÷"+cd+"d)"),h("span",{style:{color:"var(--tl)"}},cs+Math.round(altRate).toLocaleString())))}
 // Cycle days
 c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"Cycle days"),numI(j.cycleDays||30,45,function(v){j.cycleDays=v;save();render()})));
+// Full pay toggle (for monthly/weekly)
+if(j.rateType==="monthly"||j.rateType==="weekly"){
+c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"Full pay regardless"),
+h("button",{className:"bg",style:{background:j.fullPay?"var(--gl)":"#E9E5DE",color:j.fullPay?"var(--gn)":"var(--tl)",fontSize:"11px"},onClick:function(){j.fullPay=!j.fullPay;save();render()}},j.fullPay?"yes ✓":"no — adjusts")))}
 c.appendChild(h("div",{className:"dv"}));
 // Per person: days worked, paid off, unpaid off (auto-adjust)
 j.people.forEach(function(p){
@@ -548,8 +553,8 @@ c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"Days worked"),
 c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"Paid days off"),numI(po,45,function(v){ensureMD();j.monthData[mk].paidOff[p]=v;j.monthData[mk].unpaidOff[p]=Math.max(0,cd-(days[p]||0)-v);save();render()})));
 c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"Unpaid days off"),numI(uo,45,function(v){ensureMD();j.monthData[mk].unpaidOff[p]=v;j.monthData[mk].days[p]=Math.max(0,cd-v-(paidOff[p]||0));save();render()})));
 var paidDays=w+po;
-var earn=j.rateType==="daily"?paidDays*j.rate:j.rateType==="weekly"?Math.ceil(paidDays/7)*j.rate:j.rate;
-c.appendChild(h("div",{className:"rw",style:{fontSize:"11px"}},h("span",{className:"dm"},"Paid days: "+paidDays+" · Off: "+uo),h("span",null,cs+earn.toLocaleString())))});
+var earn=j.rateType==="daily"?paidDays*j.rate:j.rateType==="weekly"?Math.ceil(paidDays/7)*j.rate:j.rateType==="monthly"?(j.fullPay?j.rate:(cd>0?j.rate*(paidDays/cd):j.rate)):j.rate;
+c.appendChild(h("div",{className:"rw",style:{fontSize:"11px"}},h("span",{className:"dm"},"Paid days: "+paidDays+" · Off: "+uo),h("span",null,cs+Math.round(earn).toLocaleString())))});
 c.appendChild(h("div",{className:"dv"}));
 // Deductions
 (j.deductions||[]).forEach(function(ded){var cnt=ded.perPerson?j.people.filter(function(p){return(days[p]||0)>0||(paidOff[p]||0)>0}).length:1;
