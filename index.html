@@ -63,8 +63,17 @@ var SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
 var currentUser=null;
 var saveTimer=null;
-var cR={EUR:1,THB:0.0265,VND:0.0000375,USD:0.92,GBP:1.17};
-var cS={EUR:"€",THB:"฿",VND:"₫",USD:"$",GBP:"£"};
+var cR={EUR:1,THB:0.0265,VND:0.0000375,USD:0.92,GBP:1.17,AUD:0.56,CAD:0.65,CHF:1.05,AED:0.25,SGD:0.69,SEK:0.088,NOK:0.083,DKK:0.134,JPY:0.006,NZD:0.52,CNY:0.127,MXN:0.047,QAR:0.25,SAR:0.245,KRW:0.00065,IDR:0.000058,MYR:0.21,PHP:0.016,INR:0.011,ZAR:0.05,BRL:0.16,HKD:0.118,TWD:0.031,PLN:0.235,CZK:0.04,HUF:0.0025,TRY:0.025,RUB:0.01};
+var cS={EUR:"€",THB:"฿",VND:"₫",USD:"$",GBP:"£",AUD:"A$",CAD:"C$",CHF:"Fr",AED:"د.إ",SGD:"S$",SEK:"kr",NOK:"kr",DKK:"kr",JPY:"¥",NZD:"NZ$",CNY:"¥",MXN:"MX$",QAR:"QR",SAR:"SR",KRW:"₩",IDR:"Rp",MYR:"RM",PHP:"₱",INR:"₹",ZAR:"R",BRL:"R$",HKD:"HK$",TWD:"NT$",PLN:"zł",CZK:"Kč",HUF:"Ft",TRY:"₺",RUB:"₽"};
+var activeCur=null;
+function getActiveCur(){if(activeCur)return activeCur;if(D&&D.activeCurrencies)return D.activeCurrencies;return["EUR","THB","VND","USD","GBP"]}
+function curButtons(selected,onPick,container){var ac=getActiveCur();
+ac.forEach(function(c){container.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:selected===c?"var(--gl)":"#E9E5DE",color:selected===c?"var(--gn)":"var(--tl)"},onClick:function(){onPick(c)}},c+" "+(cS[c]||"")))});
+container.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",color:"var(--tl)"},onClick:function(){
+var allC=Object.keys(cR).filter(function(c){return ac.indexOf(c)<0});
+var pick=prompt("Add currency:\n"+allC.join(", "));if(!pick)return;pick=pick.toUpperCase().trim();
+if(cR[pick]){if(!D.activeCurrencies)D.activeCurrencies=ac.slice();D.activeCurrencies.push(pick);activeCur=null;save();onPick(pick)}
+}},"+"))}
 var MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function nid(){return _n++}
 function tot(a){return(a||[]).reduce(function(s,i){return s+(i.amount||0)},0)}
@@ -377,7 +386,7 @@ var row=h("div",{style:{padding:"4px 0"}});
 row.appendChild(h("div",{className:"rw"},
 edS(a.name,function(v){a.name=v;save();render()},"dm"),
 h("div",{style:{display:"flex",alignItems:"center",gap:"4px"}},
-h("button",{className:"bsm",style:{fontSize:"9px"},onClick:function(){var cs=Object.keys(cR);a.currency=cs[(cs.indexOf(a.currency)+1)%cs.length];save();render()}},a.currency),
+h("button",{className:"bsm",style:{fontSize:"9px"},onClick:function(){var cs=getActiveCur();a.currency=cs[(cs.indexOf(a.currency)+1)%cs.length];save();render()}},a.currency),
 numI(a.amount,75,function(v){a.prevAmount=a.amount;a.amount=v;a.updatedAt=new Date().toLocaleDateString();anyUpdated=true;save();render()}),
 h("button",{className:"bx",onClick:function(){mm.accounts=mm.accounts.filter(function(x){return x.id!==a.id});save();render()}},"×"))));
 if(a.updatedAt){var info=h("div",{style:{fontSize:"9px",color:"var(--tl)",paddingLeft:"4px"}},a.updatedAt);
@@ -532,7 +541,7 @@ h("div",{className:"fg4"},
 var rateLabel=j.rateType==="daily"?"Day rate":j.rateType==="weekly"?"Weekly rate":j.rateType==="monthly"?"Monthly rate":"Lump sum";
 c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},rateLabel),
 h("div",{style:{display:"flex",alignItems:"center",gap:"4px"}},numI(j.rate,70,function(v){j.rate=v;save();render()}),
-h("button",{className:"bsm",onClick:function(){var cs2=Object.keys(cR);j.currency=cs2[(cs2.indexOf(j.currency)+1)%cs2.length];save();render()}},j.currency))));
+h("button",{className:"bsm",onClick:function(){var cs2=getActiveCur();j.currency=cs2[(cs2.indexOf(j.currency)+1)%cs2.length];save();render()}},j.currency))));
 // Alternate rate display
 if(j.rateType==="daily"){c.appendChild(h("div",{className:"rw",style:{fontSize:"11px"}},h("span",{className:"dm"},"~monthly"),h("span",{style:{color:"var(--tl)"}},cs+Math.round(altRate).toLocaleString())))}
 else if(j.rateType==="weekly"){c.appendChild(h("div",{className:"rw",style:{fontSize:"11px"}},h("span",{className:"dm"},"~monthly ("+cd+"d)"),h("span",{style:{color:"var(--tl)"}},cs+Math.round(altRate).toLocaleString())))}
@@ -554,7 +563,14 @@ c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"Paid days off"
 c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"Unpaid days off"),numI(uo,45,function(v){ensureMD();j.monthData[mk].unpaidOff[p]=v;j.monthData[mk].days[p]=Math.max(0,cd-v-(paidOff[p]||0));save();render()})));
 var paidDays=w+po;
 var earn=j.rateType==="daily"?paidDays*j.rate:j.rateType==="weekly"?Math.ceil(paidDays/7)*j.rate:j.rateType==="monthly"?(j.fullPay?j.rate:(cd>0?j.rate*(paidDays/cd):j.rate)):j.rate;
-c.appendChild(h("div",{className:"rw",style:{fontSize:"11px"}},h("span",{className:"dm"},"Paid days: "+paidDays+" · Off: "+uo),h("span",null,cs+Math.round(earn).toLocaleString())))});
+var earnEur=Math.round(earn*(cR[j.currency]||1));
+var adjKey="netAdj_"+p;var hasAdj=md[adjKey]!=null;
+c.appendChild(h("div",{className:"rw",style:{fontSize:"11px"}},h("span",{className:"dm"},"Paid days: "+paidDays+" · Off: "+uo),
+h("span",null,cs+Math.round(earn).toLocaleString()+(j.currency!=="EUR"?" (~€"+earnEur.toLocaleString()+")":""))));
+if(hasAdj){c.appendChild(h("div",{className:"rw",style:{fontSize:"10px"}},h("span",{className:"dm"},"Adjusted net"),
+h("div",{style:{display:"flex",alignItems:"center",gap:"4px"}},numI(md[adjKey],60,function(v){ensureMD();j.monthData[mk][adjKey]=v;save();render()}),
+h("button",{className:"bx",onClick:function(){ensureMD();delete j.monthData[mk][adjKey];save();render()}},"×"))))}
+});
 c.appendChild(h("div",{className:"dv"}));
 // Deductions
 (j.deductions||[]).forEach(function(ded){var cnt=ded.perPerson?j.people.filter(function(p){return(days[p]||0)>0||(paidOff[p]||0)>0}).length:1;
@@ -562,7 +578,12 @@ c.appendChild(h("div",{className:"rw",style:{fontSize:"12px"}},edS(ded.name,func
 h("div",{style:{display:"flex",alignItems:"center",gap:"4px"}},h("span",{style:{color:"var(--rd)"}},"-"),numI(ded.amount,50,function(v){ded.amount=v;save();render()}),
 h("span",{style:{fontSize:"9px",color:"var(--tl)"}},ded.perPerson?"×"+cnt:"flat"),h("button",{className:"bx",onClick:function(){j.deductions=j.deductions.filter(function(x){return x.id!==ded.id});save();render()}},"×"))))});
 c.appendChild(h("button",{className:"bsm",onClick:function(){sM("addDeduction","Add deduction",{jobId:j.id})}},"+ deduction"));
-c.appendChild(h("div",{className:"rw mt8"},h("span",{style:{fontWeight:600}},"Net"),h("span",{style:{fontWeight:700}},cs+net.toLocaleString())));
+// Net with EUR conversion
+var netEur=Math.round(net*(cR[j.currency]||1));
+c.appendChild(h("div",{className:"rw mt8"},h("span",{style:{fontWeight:600}},"Net"),h("span",{style:{fontWeight:700}},cs+Math.round(net).toLocaleString()+(j.currency!=="EUR"?" (~€"+netEur.toLocaleString()+")":""))));
+// Adjust per person option
+var anyAdj=j.people.some(function(p){return md["netAdj_"+p]!=null});
+if(!anyAdj){c.appendChild(h("button",{className:"bsm",style:{fontSize:"9px",marginTop:"4px"},onClick:function(){ensureMD();j.people.forEach(function(p){var paidD=(days[p]||0)+(paidOff[p]||0);var e2=j.rateType==="daily"?paidD*j.rate:j.rateType==="weekly"?Math.ceil(paidD/7)*j.rate:j.rateType==="monthly"?(j.fullPay?j.rate:(cd>0?j.rate*(paidD/cd):j.rate)):j.rate;j.monthData[mk]["netAdj_"+p]=Math.round(e2)});save();render()}},"adjust per person"))}
 c.appendChild(h("div",{className:"dv"}));c.appendChild(h("div",{style:{fontSize:"11px",fontWeight:600,color:"var(--tl)",marginBottom:"4px"}},"What did you receive?"));
 c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"EUR received"),numI(md.eurReceived||0,80,function(v){ensureMD();j.monthData[mk].eurReceived=v;save();render()})));
 c.appendChild(h("div",{className:"rw"},h("span",{className:"dm"},"Kept in "+j.currency),numI(md.localKept||0,80,function(v){ensureMD();j.monthData[mk].localKept=v;save();render()})));
@@ -774,7 +795,7 @@ br.appendChild(h("button",{className:"bsm",style:{flex:1,padding:"8px",fontWeigh
 if(mT==="newBucket")ai("Months (all or apr26,may26...)","months");
 if(mT==="newJob"){ai("Rate","rate","number");
 var rr=h("div",{className:"fg4 mb8"});["daily","weekly","monthly","lump"].forEach(function(rt){rr.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:(mF.rateType||"daily")===rt?"var(--gl)":"#E9E5DE",color:(mF.rateType||"daily")===rt?"var(--gn)":"var(--tl)"},onClick:function(){mF.rateType=rt;rMod()}},rt))});bx.appendChild(rr);
-var cr=h("div",{className:"fg4 mb8"});Object.keys(cR).forEach(function(c){cr.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:(mF.currency||"THB")===c?"var(--gl)":"#E9E5DE",color:(mF.currency||"THB")===c?"var(--gn)":"var(--tl)"},onClick:function(){mF.currency=c;rMod()}},c))});bx.appendChild(cr);
+var cr=h("div",{className:"fg4 mb8"});curButtons(mF.currency||"THB",function(c){mF.currency=c;rMod()},cr);bx.appendChild(cr);
 ai("People (comma sep)","people");ai("How many months?","duration","number");
 bx.appendChild(h("div",{style:{fontSize:"11px",color:"var(--tl)",marginBottom:"4px"}},"Default deduction:"));ai("Deduction name","dedName");ai("Deduction amount","dedAmt","number");
 bx.appendChild(h("div",{className:"fg4 mb8"},h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:mF.dedPP?"var(--gl)":"#E9E5DE"},onClick:function(){mF.dedPP=!mF.dedPP;rMod()}},"Per person")))}
@@ -799,20 +820,29 @@ tr.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:
 bx.appendChild(tr);
 bx.appendChild(h("div",{style:{fontSize:"11px",color:"var(--tl)",marginBottom:"4px"}},"Currency:"));
 var ccr=h("div",{className:"fg4 mb8"});if(!mF.cur)mF.cur="EUR";
-Object.keys(cR).forEach(function(c2){ccr.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:mF.cur===c2?"var(--gl)":"#E9E5DE",color:mF.cur===c2?"var(--gn)":"var(--tl)"},onClick:function(){mF.cur=c2;rMod()}},c2+" "+(cS[c2]||"")))});bx.appendChild(ccr)}
+curButtons(mF.cur,function(c2){mF.cur=c2;rMod()},ccr);bx.appendChild(ccr)}
 if(["savingsAdd","savingsPull","income","potential","goalItem","account","extras","bucketItem"].indexOf(mT)>=0){
 var curSym=cS[mF.cur||"EUR"]||"€";
 ai(mF.isBudget?"Budget "+curSym:curSym+" amount","amount","number")}
 if(mT==="income"||mT==="potential"){
 bx.appendChild(h("div",{style:{fontSize:"11px",color:"var(--tl)",marginBottom:"4px"}},"Currency:"));
 var icr=h("div",{className:"fg4 mb8"});if(!mF.cur)mF.cur="EUR";
-Object.keys(cR).forEach(function(c2){icr.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:mF.cur===c2?"var(--gl)":"#E9E5DE",color:mF.cur===c2?"var(--gn)":"var(--tl)"},onClick:function(){mF.cur=c2;rMod()}},c2+" "+(cS[c2]||"")))});bx.appendChild(icr)}
+curButtons(mF.cur,function(c2){mF.cur=c2;rMod()},icr);bx.appendChild(icr)}
 if(mT==="savingsAdd"||mT==="savingsPull"){bx.appendChild(h("div",{style:{fontSize:"11px",color:"var(--tl)",marginBottom:"4px"}},mT==="savingsAdd"?"To which savings account?":"From which?"));
 var sar=h("div",{className:"fg4 mb8"});if(!mF.savAcct&&D.savings.length)mF.savAcct=D.savings[0].id;
 D.savings.forEach(function(sa){sar.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:mF.savAcct===sa.id?"var(--gl)":"#E9E5DE",color:mF.savAcct===sa.id?"var(--gn)":"var(--tl)"},onClick:function(){mF.savAcct=sa.id;rMod()}},sa.name))});bx.appendChild(sar)}
-if(mT==="income"){bx.appendChild(h("div",{style:{fontSize:"11px",color:"var(--tl)",marginBottom:"4px"}},"Recurring?"));
-var rr2=h("div",{className:"fg4 mb8"});[{l:"One-off",v:0},{l:"2 mo",v:2},{l:"3 mo",v:3},{l:"6 mo",v:6},{l:"Monthly",v:12}].forEach(function(o){rr2.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:(mF.recur||0)===o.v?"var(--gl)":"#E9E5DE",color:(mF.recur||0)===o.v?"var(--gn)":"var(--tl)"},onClick:function(){mF.recur=o.v;rMod()}},o.l))});bx.appendChild(rr2)}
-if(mT==="account"){var cr2=h("div",{className:"fg4 mb8"});Object.keys(cR).forEach(function(c){cr2.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:mF.currency===c?"var(--gl)":"#E9E5DE",color:mF.currency===c?"var(--gn)":"var(--tl)"},onClick:function(){mF.currency=c;rMod()}},c+" "+(cS[c]||"")))});bx.appendChild(cr2)}
+if(mT==="income"){
+bx.appendChild(h("div",{style:{fontSize:"11px",color:"var(--tl)",marginBottom:"4px"}},"How often?"));
+var freqR=h("div",{className:"fg4 mb8"});if(!mF.freq)mF.freq="once";
+["once","months","ongoing"].forEach(function(f){freqR.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:mF.freq===f?"var(--gl)":"#E9E5DE",color:mF.freq===f?"var(--gn)":"var(--tl)"},onClick:function(){mF.freq=f;rMod()}},f==="once"?"One-off":f==="months"?"For X months":"Ongoing"))});
+bx.appendChild(freqR);
+if(mF.freq==="months"){ai("How many months?","numMonths","number")}
+if(mF.freq!=="once"){
+bx.appendChild(h("div",{style:{fontSize:"11px",color:"var(--tl)",marginBottom:"4px"}},"Per:"));
+var perR=h("div",{className:"fg4 mb8"});if(!mF.per)mF.per="month";
+["week","month"].forEach(function(p){perR.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:mF.per===p?"var(--gl)":"#E9E5DE",color:mF.per===p?"var(--gn)":"var(--tl)"},onClick:function(){mF.per=p;rMod()}},p))}); 
+bx.appendChild(perR)}}
+if(mT==="account"){var cr2=h("div",{className:"fg4 mb8"});curButtons(mF.currency||"EUR",function(c){mF.currency=c;rMod()},cr2);bx.appendChild(cr2)}
 var btns=h("div",{className:"fg mt8"});
 btns.appendChild(h("button",{className:"bn",onClick:function(){doMA();mT=null;rMod();render()}},mT==="editSummary"?"Save":"Add"));
 btns.appendChild(h("button",{className:"bsm",style:{padding:"8px 16px",fontSize:"12px",fontWeight:700},onClick:function(){mT=null;rMod()}},"Cancel"));
@@ -823,9 +853,10 @@ if(mT==="savingsAdd"){var a=parseFloat(mF.amount)||0;var sa=D.savings.find(funct
 else if(mT==="savingsPull"){var a2=parseFloat(mF.amount)||0;var sa2=D.savings.find(function(x){return x.id===mF.savAcct});if(sa2)sa2.amount=Math.max(0,sa2.amount-a2);D.savingsLog.push({id:id,date:new Date().toLocaleDateString(),desc:(mF.name||"Pulled")+" ← "+(sa2?sa2.name:""),amt:-a2})}
 else if(mT==="savingsAcct"){D.savings.push({id:id,name:mF.name||"New Account",amount:parseFloat(mF.amount)||0})}
 else if(mT==="savTransfer"&&mm){var sta=parseFloat(mF.amount)||0;var stAcct=D.savings.find(function(x){return x.id===mF.savAcct});if(stAcct)stAcct.amount+=sta;if(!mm.savTransfers)mm.savTransfers=[];mm.savTransfers.push({id:id,amount:sta,savAcctId:mF.savAcct,date:new Date().toLocaleDateString()});D.savingsLog.push({id:nid(),date:new Date().toLocaleDateString(),desc:mm.short+" → "+(stAcct?stAcct.name:"savings"),amt:sta})}
-else if(mT==="income"){var rn=parseInt(mF.recur)||0;var iCur=mF.cur||"EUR";var iAmt=parseFloat(mF.amount)||0;var iAmtEur=iCur==="EUR"?iAmt:iAmt*(cR[iCur]||1);
-if(rn>0){var all=allMK(),si=all.indexOf(mk);for(var i=0;i<rn&&si+i<all.length;i++){var tm=gM(all[si+i]);if(tm)tm.income.push({id:nid(),name:mF.name,amount:iAmtEur,origAmount:iAmt,currency:iCur,status:"confirmed",recur:rn})}}
-else if(mm)mm.income.push({id:id,name:mF.name,amount:iAmtEur,origAmount:iAmt,currency:iCur,status:"confirmed",recur:0})}
+else if(mT==="income"){var iCur=mF.cur||"EUR";var iAmt=parseFloat(mF.amount)||0;var iAmtEur=iCur==="EUR"?iAmt:iAmt*(cR[iCur]||1);
+var numM=1;if(mF.freq==="months")numM=parseInt(mF.numMonths)||1;else if(mF.freq==="ongoing")numM=12;
+var all=allMK(),si=all.indexOf(mk);
+for(var i=0;i<numM&&si+i<all.length;i++){var tm=gM(all[si+i]);if(tm)tm.income.push({id:nid(),name:mF.name,amount:iAmtEur,origAmount:iAmt,currency:iCur,status:"confirmed",recur:numM>1?numM:0,freq:mF.freq||"once",per:mF.per||"month"})}}
 else if(mT==="potential"&&mm){var pCur=mF.cur||"EUR";var pAmt=parseFloat(mF.amount)||0;var pAmtEur=pCur==="EUR"?pAmt:pAmt*(cR[pCur]||1);mm.potentials.push({id:id,name:mF.name,amount:pAmtEur,origAmount:pAmt,currency:pCur})}
 else if(mT==="goalItem")D.goals.forEach(function(g){if(g.id===mX.goalId)g.items.push({id:id,name:mF.name,amount:parseFloat(mF.amount)})});
 else if(mT==="goal"){var mp=D.goals.reduce(function(mx,g){return Math.max(mx,g.priority||0)},0);D.goals.push({id:id,name:mF.name||"Goal",items:[],priority:mp+1,deadline:mF.deadline||"",desc:mF.desc||""})}
