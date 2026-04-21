@@ -433,6 +433,23 @@ var savTot=(mm.savTransfers||[]).reduce(function(s,t){return s+t.amount},0);
 if(savTot>0)sv.appendChild(h("div",{className:"sb"},h("div",{className:"rw"},h("span",{style:{fontSize:"12px",fontWeight:600}},"Total to savings"),h("span",{style:{fontWeight:700,color:"var(--au)"}},fmt(savTot)))));
 f.appendChild(sv);
 
+// FROM SAVINGS
+var fs=h("div",{className:"cd"});fs.appendChild(h("div",{className:"st"},h("span",null,"← From savings"),h("button",{className:"bsm",onClick:function(){sM("savPull","Pull from savings",{month:curMK})}},"+ pull")));
+(mm.savPulls||[]).forEach(function(tr){
+var sa=D.savings.find(function(x){return x.id===tr.savAcctId});
+var toAcc=tr.toAccount||"spending";
+fs.appendChild(h("div",{className:"rw"},
+h("div",null,h("span",{style:{fontSize:"12px"}},fmt(tr.amount)),h("span",{style:{fontSize:"10px",color:"var(--tl)",marginLeft:"4px"}},(sa?sa.name:"?")+" → "+toAcc)),
+h("div",{style:{display:"flex",alignItems:"center",gap:"4px"}},
+h("span",{style:{fontSize:"9px",color:"var(--tl)"}},tr.date||""),
+h("button",{className:"bx",onClick:function(){if(sa)sa.amount+=tr.amount;
+var tAcc=(mm.accounts||[]).find(function(a){return a.name===tr.toAccount});if(tAcc)tAcc.amount=Math.max(0,tAcc.amount-tr.amount);
+D.savingsLog.push({id:nid(),date:new Date().toLocaleDateString(),desc:"Reversed ← "+(sa?sa.name:""),amt:tr.amount});
+mm.savPulls=mm.savPulls.filter(function(x){return x.id!==tr.id});save();render()}},"×"))))});
+var pullTot=(mm.savPulls||[]).reduce(function(s,t){return s+t.amount},0);
+if(pullTot>0)fs.appendChild(h("div",{className:"sb"},h("div",{className:"rw"},h("span",{style:{fontSize:"12px",fontWeight:600}},"Total from savings"),h("span",{style:{fontWeight:700,color:"var(--gn)"}},fmt(pullTot)))));
+if((mm.savPulls||[]).length||D.savings.length)f.appendChild(fs);
+
 // SPENDING MONEY
 var ac=h("div",{className:"cd"});ac.appendChild(h("div",{className:"st"},h("span",null,"Spending money"),h("button",{className:"bsm",onClick:function(){sM("account","Add account",{month:curMK,currency:"EUR"})}},"+ add")));
 var anyUpdated=false;
@@ -875,7 +892,7 @@ function rMod(){var ex=document.getElementById("mdl");if(ex)ex.remove();if(!mT)r
 var ov=h("div",{id:"mdl",className:"modal",onClick:function(){mT=null;rMod()}});
 var bx=h("div",{className:"mbx",onClick:function(e){e.stopPropagation()}});bx.appendChild(h("h3",null,mTi));
 function ai(ph,k,t){var i=h("input",{className:"ni niw",placeholder:ph,type:t||"text",value:mF[k]||""});i.addEventListener("input",function(e){mF[k]=e.target.value});bx.appendChild(i)}
-if(mT!=="editSummary"&&mT!=="savTransfer"&&mT!=="addTracker"&&mT!=="finishMonth"&&mT!=="deleteSavings"&&mT!=="confirmReset"&&mT!=="editMonths"&&mT!=="jobReceive")ai("Name","name");
+if(mT!=="editSummary"&&mT!=="savTransfer"&&mT!=="addTracker"&&mT!=="finishMonth"&&mT!=="deleteSavings"&&mT!=="confirmReset"&&mT!=="editMonths"&&mT!=="jobReceive"&&mT!=="savPull")ai("Name","name");
 if(mT==="jobReceive"){
 var jr=mX.jobRef;var jmd=jr.monthData&&jr.monthData[mX.month];var eurAmt=jmd?jmd.eurReceived||0:0;
 bx.appendChild(h("div",{style:{fontSize:"12px",marginBottom:"4px"}},"EUR received: "+fmt(eurAmt)));
@@ -990,6 +1007,13 @@ if(mT==="savTransfer"){ai("Amount €","amount","number");
 bx.appendChild(h("div",{style:{fontSize:"11px",color:"var(--tl)",marginBottom:"4px"}},"To which savings account?"));
 var sar=h("div",{className:"fg4 mb8"});if(!mF.savAcct&&D.savings.length)mF.savAcct=D.savings[0].id;
 D.savings.forEach(function(sa){sar.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:mF.savAcct===sa.id?"var(--gl)":"#E9E5DE",color:mF.savAcct===sa.id?"var(--gn)":"var(--tl)"},onClick:function(){mF.savAcct=sa.id;rMod()}},sa.name+" ("+fmt(sa.amount)+")"))});bx.appendChild(sar)}
+if(mT==="savPull"){ai("Amount €","amount","number");
+bx.appendChild(h("div",{style:{fontSize:"11px",color:"var(--tl)",marginBottom:"4px"}},"From which savings?"));
+var spr=h("div",{className:"fg4 mb8"});if(!mF.savAcct&&D.savings.length)mF.savAcct=D.savings[0].id;
+D.savings.forEach(function(sa){spr.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:mF.savAcct===sa.id?"var(--gl)":"#E9E5DE",color:mF.savAcct===sa.id?"var(--gn)":"var(--tl)"},onClick:function(){mF.savAcct=sa.id;rMod()}},sa.name+" ("+fmt(sa.amount)+")"))});bx.appendChild(spr);
+bx.appendChild(h("div",{style:{fontSize:"11px",color:"var(--tl)",marginBottom:"4px"}},"To which account?"));
+var spr2=h("div",{className:"fg4 mb8"});var mm3=gM(mX.month);if(!mF.toAcct&&mm3&&mm3.accounts.length)mF.toAcct=mm3.accounts[0].name;
+(mm3&&mm3.accounts||[]).forEach(function(acc){spr2.appendChild(h("button",{className:"bsm",style:{padding:"6px 10px",fontWeight:700,background:mF.toAcct===acc.name?"var(--gl)":"#E9E5DE",color:mF.toAcct===acc.name?"var(--gn)":"var(--tl)"},onClick:function(){mF.toAcct=acc.name;rMod()}},acc.name))});bx.appendChild(spr2)}
 if(mT==="goal"){ai("Deadline","deadline");ai("Description","desc")}
 if(mT==="debt"){ai("Monthly payment €","amount","number");ai("Total owed €","totalOwed","number");
 var br=h("div",{className:"fg mb8"});br.appendChild(h("button",{className:"bsm",style:{flex:1,padding:"8px",fontWeight:700,background:mF.active!==false?"var(--gl)":"#E9E5DE",color:mF.active!==false?"var(--gn)":"var(--tl)"},onClick:function(){mF.active=true;rMod()}},"Active"));
@@ -1061,6 +1085,10 @@ if(mT==="savingsAdd"){var a=parseFloat(mF.amount)||0;var sa=D.savings.find(funct
 else if(mT==="savingsPull"){var a2=parseFloat(mF.amount)||0;var sa2=D.savings.find(function(x){return x.id===mF.savAcct});if(sa2)sa2.amount=Math.max(0,sa2.amount-a2);D.savingsLog.push({id:id,date:new Date().toLocaleDateString(),desc:(mF.name||"Pulled")+" ← "+(sa2?sa2.name:""),amt:-a2})}
 else if(mT==="savingsAcct"){D.savings.push({id:id,name:mF.name||"New Account",amount:parseFloat(mF.amount)||0})}
 else if(mT==="savTransfer"&&mm){var sta=parseFloat(mF.amount)||0;var stAcct=D.savings.find(function(x){return x.id===mF.savAcct});if(stAcct)stAcct.amount+=sta;if(!mm.savTransfers)mm.savTransfers=[];mm.savTransfers.push({id:id,amount:sta,savAcctId:mF.savAcct,date:new Date().toLocaleDateString()});D.savingsLog.push({id:nid(),date:new Date().toLocaleDateString(),desc:mm.short+" → "+(stAcct?stAcct.name:"savings"),amt:sta})}
+else if(mT==="savPull"&&mm){var spa=parseFloat(mF.amount)||0;var spAcct=D.savings.find(function(x){return x.id===mF.savAcct});if(spAcct)spAcct.amount=Math.max(0,spAcct.amount-spa);
+var toAcc2=(mm.accounts||[]).find(function(a){return a.name===mF.toAcct});if(toAcc2)toAcc2.amount+=spa;
+if(!mm.savPulls)mm.savPulls=[];mm.savPulls.push({id:id,amount:spa,savAcctId:mF.savAcct,toAccount:mF.toAcct,date:new Date().toLocaleDateString()});
+D.savingsLog.push({id:nid(),date:new Date().toLocaleDateString(),desc:(spAcct?spAcct.name:"savings")+" → "+mm.short,amt:-spa})}
 else if(mT==="income"){var iCur=mF.cur||"EUR";var iAmt=parseFloat(mF.amount)||0;var iAmtEur=iCur==="EUR"?iAmt:iAmt*(cR[iCur]||1);
 var numM=1;if(mF.freq==="months")numM=parseInt(mF.numMonths)||1;else if(mF.freq==="ongoing")numM=12;
 var all=allMK(),si=all.indexOf(mk);
